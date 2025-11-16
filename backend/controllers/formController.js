@@ -4,17 +4,20 @@ import Submission from '../models/Submission.js';
 
 export const orchestrateFieldGeneration = async (req, res) => {
   try {
-    const { formDescription } = req.body;
+    const { formDescription, title = '', purpose = '', audience = '' } = req.body;
     if (!formDescription) {
       return res.status(400).json({ error: "formDescription is required." });
     }
 
     console.log("Step 1: Received request:", formDescription);
-    console.log("prateek");
+    console.log("Title:", title);
+    console.log("Purpose:", purpose);
+    console.log("Audience:", audience);
 
-    // Step 2 & 3: Get initial fields from LLM
-    const initialFields = await generateFormFields(formDescription);
-    console.log("Step 3: Received initial fields from LLM.");
+    // Step 2 & 3: Get initial fields from LLM with full context
+    const initialFields = await generateFormFields(formDescription, title, purpose, audience);
+    console.log(`Step 3: Received ${initialFields.length} fields from LLM.`);
+    console.log("Fields generated:", initialFields.map(f => f.fieldLabel).join(", "));
 
     // Step 5: Get HTML type for each field from LLM
     const finalizedFieldsPromises = initialFields.map(async (field) => {
@@ -23,7 +26,7 @@ export const orchestrateFieldGeneration = async (req, res) => {
     });
 
     const finalizedFields = await Promise.all(finalizedFieldsPromises);
-    console.log("Step 5: Finalized fields with HTML types.");
+    console.log(`Step 5: Finalized ${finalizedFields.length} fields with HTML types.`);
 
     res.status(200).json(finalizedFields);
   } catch (error) {

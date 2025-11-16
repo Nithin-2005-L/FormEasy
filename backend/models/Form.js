@@ -22,8 +22,36 @@ const formSchema = new mongoose.Schema({
     required: true,
   },
   userId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true,
+  },
+  theme: {
+    type: String,
+    enum: ['default', 'dark', 'minimal', 'vibrant', 'corporate'],
+    default: 'default',
+  },
+  uniqueCode: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
+  isPublished: {
+    type: Boolean,
+    default: false,
+  },
+  publishedAt: {
+    type: Date,
+    default: null,
+  },
+  submissions: {
+    type: Number,
+    default: 0,
+  },
+  analyticsToken: {
+    type: String,
+    unique: true,
+    sparse: true,
   },
   createdAt: {
     type: Date,
@@ -35,7 +63,9 @@ const formSchema = new mongoose.Schema({
   },
 });
 
+// Index for efficient querying
+formSchema.index({ userId: 1, createdAt: -1 });
+
 const Form = mongoose.model('Form', formSchema);
 
 export default Form;
-

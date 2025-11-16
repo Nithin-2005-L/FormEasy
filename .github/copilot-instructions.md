@@ -66,7 +66,7 @@ npm run dev
 - Add new API endpoint: `backend/routes/formRoutes.js`
 
 ## Project Conventions
-1. File Structure
+1. File StructureThere was an error generating the form fields. Please check the console for details.  
    - Backend follows MVC pattern with clear separation of concerns
    - Frontend components are grouped by domain/feature
 2. Naming
