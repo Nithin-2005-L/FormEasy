@@ -12,6 +12,7 @@ import FieldGenerationPage from './pages/FieldGenerationPage';
 import FormEditorPage from './pages/FormEditorPage';
 import FormResponsePage from './pages/FormResponsePage';
 import SubmissionsPage from './pages/SubmissionsPage';
+import DashboardPage from './pages/DashboardPage';
 
 // IMPORTANT: Replace with your actual Google Client ID
 // Go to https://console.cloud.google.com/apis/credentials to get one.
@@ -26,6 +27,7 @@ function App() {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/create-form" element={<FormInputPage />} />
               <Route path="/generate-fields" element={<FieldGenerationPage />} />
               <Route path="/edit-form" element={<FormEditorPage />} />

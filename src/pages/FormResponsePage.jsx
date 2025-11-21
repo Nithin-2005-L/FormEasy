@@ -338,7 +338,7 @@ const FormResponsePage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-slate-950">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading form...</p>
@@ -360,7 +360,7 @@ const FormResponsePage = () => {
 
   if (submitSuccess) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-slate-950">
         <div className="text-center p-8 bg-white rounded-lg shadow">
           <h2 className="text-2xl font-bold text-green-600 mb-2">✓ Form Submitted Successfully!</h2>
           <p className="text-gray-600">Thank you for your response. Redirecting...</p>
@@ -370,7 +370,7 @@ const FormResponsePage = () => {
   }
 
   return (
-    <div className={`min-h-screen py-8 px-4 ${themes[selectedTheme].bgClass}`}>
+    <div className={`min-h-screen py-8 px-4 bg-slate-950`}>
       <div className="max-w-2xl mx-auto">
         <div className={`${themes[selectedTheme].containerClass} rounded-lg shadow-md p-8`}>
           <div className="mb-6">

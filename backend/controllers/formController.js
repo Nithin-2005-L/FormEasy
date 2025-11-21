@@ -43,7 +43,7 @@ export const orchestrateFieldGeneration = async (req, res) => {
 // Save a form to the database
 export const saveForm = async (req, res) => {
   try {
-    const { title, purpose, audience, description, fields, userId } = req.body;
+    const { title, purpose, audience, description, fields, userId, theme } = req.body;
     
     if (!title || !description || !fields || !userId) {
       return res.status(400).json({ error: "Missing required fields: title, description, fields, userId" });
@@ -56,6 +56,7 @@ export const saveForm = async (req, res) => {
       description,
       fields,
       userId,
+      theme: theme || 'default',
       updatedAt: Date.now()
     });
 

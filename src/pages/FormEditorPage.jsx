@@ -6,9 +6,13 @@ const FormEditorPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
-  const [formTitle, setFormTitle] = useState('');
-  const [formDescription, setFormDescription] = useState('');
+
+  // Initialize title/description from navigation state so user doesn't need to re-enter them
+  const initialTitle = location.state?.formTitle || '';
+  const initialDescription = location.state?.formDescription || '';
+
+  const [formTitle, setFormTitle] = useState(initialTitle);
+  const [formDescription, setFormDescription] = useState(initialDescription);
   const [fields, setFields] = useState(location.state?.fields || []);
   const [isSaving, setIsSaving] = useState(false);
   const [editingFieldIndex, setEditingFieldIndex] = useState(null);
@@ -95,7 +99,7 @@ const FormEditorPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-slate-950 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-md p-8">
           <h1 className="text-3xl font-bold mb-6">Edit Form</h1>
@@ -128,133 +132,148 @@ const FormEditorPage = () => {
           <div className="mb-8">
             <h2 className="text-xl font-bold mb-4">Fields</h2>
 
-            {editingFieldIndex !== null && editingField ? (
-              <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-6 mb-4">
-                <h3 className="text-lg font-semibold mb-4">Edit Field</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block mb-2 font-medium">Field Name</label>
-                    <input
-                      type="text"
-                      value={editingField.fieldName}
-                      onChange={(e) => setEditingField({ ...editingField, fieldName: e.target.value })}
-                      className="w-full px-4 py-2 border rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block mb-2 font-medium">Field Label</label>
-                    <input
-                      type="text"
-                      value={editingField.fieldLabel}
-                      onChange={(e) => setEditingField({ ...editingField, fieldLabel: e.target.value })}
-                      className="w-full px-4 py-2 border rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block mb-2 font-medium">Field Type</label>
-                    <select
-                      value={editingField.fieldType}
-                      onChange={(e) => setEditingField({ ...editingField, fieldType: e.target.value })}
-                      className="w-full px-4 py-2 border rounded-lg"
-                    >
-                      <option value="text">Text</option>
-                      <option value="email">Email</option>
-                      <option value="password">Password</option>
-                      <option value="number">Number</option>
-                      <option value="date">Date</option>
-                      <option value="time">Time</option>
-                      <option value="datetime-local">DateTime</option>
-                      <option value="textarea">Text Area</option>
-                      <option value="select">Select</option>
-                      <option value="radio">Radio</option>
-                      <option value="checkbox">Checkbox</option>
-                      <option value="file">File</option>
-                      <option value="url">URL</option>
-                      <option value="phone">Phone</option>
-                      <option value="color">Color</option>
-                      <option value="range">Range</option>
-                      <option value="rating">Rating</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={editingField.fieldRequired}
-                      onChange={(e) => setEditingField({ ...editingField, fieldRequired: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <label className="font-medium">Required</label>
-                  </div>
-                  {['select', 'radio', 'checkbox', 'rating'].includes(editingField.fieldType) && (
-                    <div>
-                      <label className="block mb-2 font-medium">Options (comma-separated)</label>
-                      <textarea
-                        value={editingField.fieldOptions.join(', ')}
-                        onChange={(e) => setEditingField({
-                          ...editingField,
-                          fieldOptions: e.target.value.split(',').map(o => o.trim()).filter(o => o)
-                        })}
-                        rows="3"
-                        className="w-full px-4 py-2 border rounded-lg"
-                        placeholder="Option 1, Option 2, Option 3"
-                      />
-                    </div>
-                  )}
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={handleSaveFieldEdit}
-                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                    >
-                      Save Field
-                    </button>
-                    <button
-                      onClick={() => setEditingFieldIndex(null)}
-                      className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-
             <div className="space-y-3 mb-4">
-              {fields.map((field, index) => (
-                <div key={index} className="bg-gray-50 border rounded-lg p-4 flex justify-between items-center">
-                  <div className="flex-1">
-                    <p className="font-semibold">{field.fieldLabel}</p>
-                    <p className="text-sm text-gray-600">{field.fieldType} {field.fieldRequired ? '(Required)' : ''}</p>
+              {fields.map((field, index) => {
+                const isEditing = editingFieldIndex === index && editingField;
+                const currentField = isEditing ? editingField : field;
+
+                return (
+                  <div key={index} className="bg-gray-50 border rounded-lg p-4">
+                    {isEditing ? (
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center mb-1">
+                          <p className="text-sm font-semibold text-gray-800">Editing field #{index + 1}</p>
+                          <span className="text-xs text-gray-500">{currentField.fieldName}</span>
+                        </div>
+                        <div>
+                          <label className="block mb-1 text-sm font-medium text-gray-700">Field Label</label>
+                          <input
+                            type="text"
+                            value={currentField.fieldLabel}
+                            onChange={(e) => setEditingField({ ...currentField, fieldLabel: e.target.value })}
+                            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block mb-1 text-sm font-medium text-gray-700">Field Type</label>
+                          <select
+                            value={currentField.fieldType}
+                            onChange={(e) => setEditingField({ ...currentField, fieldType: e.target.value })}
+                            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="text">Text</option>
+                            <option value="email">Email</option>
+                            <option value="password">Password</option>
+                            <option value="number">Number</option>
+                            <option value="date">Date</option>
+                            <option value="time">Time</option>
+                            <option value="datetime-local">DateTime</option>
+                            <option value="textarea">Text Area</option>
+                            <option value="select">Select</option>
+                            <option value="radio">Radio</option>
+                            <option value="checkbox">Checkbox</option>
+                            <option value="file">File</option>
+                            <option value="url">URL</option>
+                            <option value="phone">Phone</option>
+                            <option value="color">Color</option>
+                            <option value="range">Range</option>
+                            <option value="rating">Rating</option>
+                          </select>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={currentField.fieldRequired}
+                            onChange={(e) =>
+                              setEditingField({ ...currentField, fieldRequired: e.target.checked })
+                            }
+                            className="w-4 h-4"
+                          />
+                          <label className="text-sm font-medium text-gray-700">Required</label>
+                        </div>
+                        {['select', 'radio', 'checkbox', 'rating'].includes(currentField.fieldType) && (
+                          <div>
+                            <label className="block mb-1 text-sm font-medium text-gray-700">
+                              Options (comma-separated)
+                            </label>
+                            <textarea
+                              value={currentField.fieldOptions.join(', ')}
+                              onChange={(e) =>
+                                setEditingField({
+                                  ...currentField,
+                                  fieldOptions: e.target.value
+                                    .split(',')
+                                    .map((o) => o.trim())
+                                    .filter((o) => o)
+                                })
+                              }
+                              rows="2"
+                              className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Option 1, Option 2, Option 3"
+                            />
+                          </div>
+                        )}
+                        <div className="flex space-x-2 pt-1">
+                          <button
+                            onClick={handleSaveFieldEdit}
+                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingFieldIndex(null)}
+                            className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-700"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 pr-4">
+                          <p className="font-semibold text-gray-900">{field.fieldLabel}</p>
+                          <p className="text-xs text-gray-500 mt-1">{field.fieldName}</p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            {field.fieldType} {field.fieldRequired ? '• Required' : '• Optional'}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end space-y-1">
+                          <div className="flex space-x-1">
+                            <button
+                              onClick={() => handleMoveField(index, 'up')}
+                              disabled={index === 0}
+                              className="px-2 py-1 bg-gray-200 rounded text-xs disabled:opacity-50"
+                            >
+                              ↑
+                            </button>
+                            <button
+                              onClick={() => handleMoveField(index, 'down')}
+                              disabled={index === fields.length - 1}
+                              className="px-2 py-1 bg-gray-200 rounded text-xs disabled:opacity-50"
+                            >
+                              ↓
+                            </button>
+                          </div>
+                          <div className="flex space-x-1 pt-1">
+                            <button
+                              onClick={() => handleEditField(index)}
+                              className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteField(index)}
+                              className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleMoveField(index, 'up')}
-                      disabled={index === 0}
-                      className="px-2 py-1 bg-gray-300 rounded disabled:opacity-50"
-                    >
-                      ↑
-                    </button>
-                    <button
-                      onClick={() => handleMoveField(index, 'down')}
-                      disabled={index === fields.length - 1}
-                      className="px-2 py-1 bg-gray-300 rounded disabled:opacity-50"
-                    >
-                      ↓
-                    </button>
-                    <button
-                      onClick={() => handleEditField(index)}
-                      className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteField(index)}
-                      className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <button

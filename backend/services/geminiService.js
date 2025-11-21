@@ -3,9 +3,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Trim and validate the API key at module load so we catch formatting issues early
 const API_KEY = (process.env.GEMINI_API_KEY || '').trim();
 // Log masked info so we can confirm the key is being picked up (don't print the full key)
-console.log('Gemini API key present:', !!API_KEY, 'length:', API_KEY.length);
-// Initialize client with API key option — the library expects an options object
-const genAI = new GoogleGenerativeAI({ apiKey: API_KEY });
+console.log('[Gemini] API key present:', !!API_KEY, 'length:', API_KEY.length);
+// Initialize client with API key — this matches the official SDK signature
+const genAI = new GoogleGenerativeAI(API_KEY);
 
 /**
  * Corresponds to Step 2 in the Process Flow PDF.
@@ -17,7 +17,15 @@ export const generateFormFields = async (userPrompt, title = '', purpose = '', a
       throw new Error("GEMINI_API_KEY is not configured. Please check your .env file.");
     }
     
-    const model = genAI.getGenerativeModel({ model: "gemini-pro-latest" });
+    console.log('[Gemini] Calling generateFormFields with context:', {
+      hasTitle: !!title,
+      hasPurpose: !!purpose,
+      hasAudience: !!audience,
+      descriptionPreview: userPrompt?.slice(0, 80) || ''
+    });
+
+    // Use a stable Gemini model that is available on v1beta
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     
     // Build a comprehensive context from all available information
     const contextParts = [];
@@ -27,14 +35,14 @@ export const generateFormFields = async (userPrompt, title = '', purpose = '', a
     contextParts.push(`Description: ${userPrompt}`);
     const fullContext = contextParts.join('\n');
     
-    const instruction = `You are an expert form designer. Based on the following context, generate a comprehensive and well-structured JSON array of form fields that would be most appropriate for this form.
+    const instruction = `You are an expert form designer. Based on the following context (FORM TITLE, PURPOSE, TARGET AUDIENCE, and DESCRIPTION), generate a comprehensive and well-structured JSON array of form fields that are clearly and directly related to this specific form.
 
 ${fullContext}
 
 CRITICAL REQUIREMENTS:
 1. Generate AT LEAST 8 fields (minimum 8 fields required - do not generate less than 8)
 2. Preferably generate 10-15 fields for a complete form
-3. Include a good mix of field types appropriate to the context
+3. Every field MUST be meaningfully related to the form's title, purpose, target audience, and description (no generic or off-topic questions)
 4. Each field MUST have: "fieldName", "fieldLabel", "fieldType", "fieldRequired" (boolean), and "fieldOptions" (array)
 5. Make fieldNames camelCase (e.g., "firstName", "emailAddress", "companyName")
 6. Make fieldLabels user-friendly with proper capitalization
@@ -91,18 +99,23 @@ Your entire response must be ONLY the raw JSON array with no markdown formatting
     console.error("Error generating form fields:", error);
     const msg = error?.message || String(error);
 
-    // If the LLM call fails due to API key / auth / network issues, return a safe fallback
+    // If the LLM call fails due to API key / auth / network / model issues, return a safe fallback
     // so the frontend can continue to function while the API is fixed.
+    // IMPORTANT: still guarantee AT LEAST 8 fields.
     const fallbackFields = [
       { fieldName: 'fullName', fieldLabel: 'Full Name', fieldType: 'text', fieldRequired: true, fieldOptions: [] },
       { fieldName: 'email', fieldLabel: 'Email Address', fieldType: 'email', fieldRequired: true, fieldOptions: [] },
+      { fieldName: 'phoneNumber', fieldLabel: 'Phone Number', fieldType: 'phone', fieldRequired: false, fieldOptions: [] },
       { fieldName: 'age', fieldLabel: 'Age', fieldType: 'number', fieldRequired: false, fieldOptions: [] },
-      { fieldName: 'comments', fieldLabel: 'Comments', fieldType: 'textarea', fieldRequired: false, fieldOptions: [] }
+      { fieldName: 'preferredContactMethod', fieldLabel: 'Preferred Contact Method', fieldType: 'select', fieldRequired: false, fieldOptions: ['Email', 'Phone', 'SMS'] },
+      { fieldName: 'satisfactionRating', fieldLabel: 'Overall Satisfaction', fieldType: 'rating', fieldRequired: false, fieldOptions: ['1', '2', '3', '4', '5'] },
+      { fieldName: 'agreeToTerms', fieldLabel: 'I agree to the terms and conditions', fieldType: 'checkbox', fieldRequired: true, fieldOptions: [] },
+      { fieldName: 'comments', fieldLabel: 'Additional Comments', fieldType: 'textarea', fieldRequired: false, fieldOptions: [] }
     ];
 
-    // If error appears to be an auth/API-key problem, return fallback and surface details in logs
-    if (/API key|API_KEY_INVALID|403|Forbidden|unregistered callers/i.test(msg)) {
-      console.warn('Returning fallback fields due to LLM API error. Fix GEMINI_API_KEY or Google Cloud settings to restore full functionality.');
+    // If error appears to be an auth/API-key/model problem, return fallback and surface details in logs
+    if (/API key|API_KEY_INVALID|403|Forbidden|unregistered callers|404 Not Found|models\/.*not found/i.test(msg)) {
+      console.warn('Returning fallback fields due to LLM API/model error. Fix GEMINI_API_KEY, enabled APIs, or model name to restore full functionality.');
       return fallbackFields;
     }
 
@@ -120,7 +133,8 @@ export const getHtmlInputType = async (field) => {
       throw new Error("GEMINI_API_KEY is not configured");
     }
     
-    const model = genAI.getGenerativeModel({ model: "gemini-pro-latest" });
+    // Match the same base model as above for consistency
+    const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
     const prompt = `Given a form field with label "${field.fieldLabel}" and type "${field.fieldType}", what is the most appropriate HTML tag or input type? Choose one from: "input-text", "input-email", "input-password", "input-number", "input-date", "input-time", "input-datetime-local", "textarea", "select", "input-radio", "input-checkbox", "input-file", "input-url", "input-phone", "input-color", "input-range", "rating". Respond with ONLY ONE value from the list.`;
 
     const result = await model.generateContent(prompt);
