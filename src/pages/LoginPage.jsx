@@ -50,7 +50,7 @@ const LoginPage = () => {
 
     if (result.success) {
       setFormSuccess('Login successful! Redirecting...');
-      setTimeout(() => navigate('/create-form'), 1000);
+      setTimeout(() => navigate('/dashboard'), 1000);
     } else {
       setFormError(result.error || 'Login failed');
     }
@@ -98,7 +98,7 @@ const LoginPage = () => {
 
     if (result.success) {
       setFormSuccess('Account created successfully! Redirecting...');
-      setTimeout(() => navigate('/create-form'), 1000);
+      setTimeout(() => navigate('/dashboard'), 1000);
     } else {
       setFormError(result.error || 'Sign-up failed');
     }
@@ -125,7 +125,7 @@ const LoginPage = () => {
 
       if (result.success) {
         setFormSuccess('Google login successful! Redirecting...');
-        setTimeout(() => navigate('/create-form'), 1000);
+        setTimeout(() => navigate('/dashboard'), 1000);
       } else {
         setFormError(result.error || 'Google login failed');
       }
@@ -159,7 +159,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4 py-8">
       <div className="w-full max-w-md">
         {/* Card Container */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">

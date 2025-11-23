@@ -15,7 +15,8 @@ console.log('- Gemini API Key configured:', !!process.env.GEMINI_API_KEY);
 console.log('- JWT Secret configured:', !!process.env.JWT_SECRET);
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+// Use port 8080 by default so it matches the Vite dev proxy configuration
+const PORT = process.env.PORT || 8080;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/form-easy-app';
 
 

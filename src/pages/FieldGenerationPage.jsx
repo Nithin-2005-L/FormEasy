@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { FiTrash2, FiEye, FiX } from 'react-icons/fi';
+import PageLayout from '../components/PageLayout';
 
 const FieldGenerationPage = () => {
   const location = useLocation();
@@ -158,8 +159,8 @@ const FieldGenerationPage = () => {
   };
 
   const handleEditForm = () => {
-    // Navigate to form editor with fields
-    navigate('/edit-form', { state: { fields } });
+    // Navigate to form editor with fields and current form metadata
+    navigate('/edit-form', { state: { fields, formTitle, formDescription } });
   };
 
   const handleDragStart = (index) => {
@@ -225,11 +226,25 @@ const FieldGenerationPage = () => {
       navigate(`/form/${savedFormId}`);
     }
   };
+
   return (
-    <div className="min-h-screen p-4 sm:p-8 bg-gray-50">
-      <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-md">
-        <h2 className="text-3xl font-bold mb-2">Generate Your Form</h2>
-        <p className="mb-6 text-gray-600">Create and save your AI-generated form.</p>
+    <PageLayout
+      title="Generate your form"
+      subtitle="Describe your form in one sentence and let Gemini suggest fields. You can reorder and refine everything before saving."
+    >
+      <div className="space-y-6 text-slate-100">
+        {/* Form Title */}
+        <div>
+          <label className="block mb-1 text-sm font-medium text-slate-100">
+            Form title
+          </label>
+          <input
+            value={formTitle}
+            onChange={(e) => setFormTitle(e.target.value)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            placeholder="e.g. Dance class feedback"
+          />
+        </div>
         
         {showSuccess && (
           <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
@@ -237,31 +252,22 @@ const FieldGenerationPage = () => {
           </div>
         )}
 
-        {/* Form Title */}
-        <div className="mb-4">
-          <label className="block mb-2 font-medium text-gray-700">Form Title</label>
-          <input
-            value={formTitle}
-            onChange={(e) => setFormTitle(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g., Customer Feedback Form"
-          />
-        </div>
-
         {/* Form Description and Generate */}
-        <div className="mb-8">
-          <label className="block mb-2 font-medium text-gray-700">Form Description</label>
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div>
+          <label className="block mb-1 text-sm font-medium text-slate-100">
+            Form description
+          </label>
+          <div className="flex flex-col gap-3 sm:flex-row">
             <input
               value={formDescription}
               onChange={(e) => setFormDescription(e.target.value)}
-              className="flex-grow w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., A dance class feedback form"
+              className="flex-grow w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              placeholder="e.g. Short feedback form for students after each dance class"
             />
             <button 
               onClick={handleGenerate} 
               disabled={isLoading} 
-              className="px-6 py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 whitespace-nowrap"
+              className="whitespace-nowrap rounded-lg bg-sky-500 px-6 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:bg-sky-700/50"
             >
               {isLoading ? 'Generating...' : 'Generate Fields'}
             </button>
@@ -269,8 +275,13 @@ const FieldGenerationPage = () => {
         </div>
 
         {/* Generated Fields */}
-        <h3 className="text-xl font-semibold border-b pb-2 mb-4">Generated Fields (Drag to Reorder)</h3>
-        <div className="space-y-2 mb-6">
+        <h3 className="border-b border-slate-800 pb-2 text-lg font-semibold">
+          Generated fields
+          <span className="ml-2 text-xs font-normal text-slate-400">
+            drag to reorder or use arrows
+          </span>
+        </h3>
+        <div className="mb-4 space-y-2">
           {fields.length > 0 ? (
             fields.map((field, index) => (
               <div 
@@ -279,23 +290,28 @@ const FieldGenerationPage = () => {
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={handleDragOver}
                 onDrop={() => handleDrop(index)}
-                className={`flex items-center justify-between p-4 bg-gray-100 border rounded-lg cursor-move transition-all ${
-                  draggedIndex === index ? 'opacity-50 bg-gray-200' : 'hover:shadow-md'
+                className={`flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-sm cursor-move transition-all ${
+                  draggedIndex === index ? 'opacity-60 bg-slate-800' : 'hover:border-sky-500/70 hover:shadow-md'
                 }`}
               >
                 <div className="flex items-center flex-1 gap-3">
-                  <span className="text-gray-400 cursor-grab text-lg">≡</span>
+                  <span className="cursor-grab text-lg text-slate-500">≡</span>
                   <div>
-                    <p className="font-medium">{field.fieldLabel} {field.fieldRequired && <span className="text-red-500">*</span>}</p>
-                    <p className="text-xs text-gray-500 mt-1">{field.fieldName}</p>
+                    <p className="font-medium text-slate-50">
+                      {field.fieldLabel}{' '}
+                      {field.fieldRequired && <span className="text-red-400">*</span>}
+                    </p>
+                    <p className="mt-1 text-[0.7rem] text-slate-400">{field.fieldName}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-500 capitalize bg-white px-2 py-1 rounded-full">{field.fieldType}</span>
+                  <span className="rounded-full bg-slate-800 px-2 py-1 text-xs capitalize text-slate-300">
+                    {field.fieldType}
+                  </span>
                   <button
                     onClick={() => handleMoveUp(index)}
                     disabled={index === 0}
-                    className="px-2 py-1 text-sm text-gray-600 bg-white border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-2 py-1 text-xs text-slate-200 bg-slate-800 border border-slate-700 rounded hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Move up"
                   >
                     ↑
@@ -303,14 +319,14 @@ const FieldGenerationPage = () => {
                   <button
                     onClick={() => handleMoveDown(index)}
                     disabled={index === fields.length - 1}
-                    className="px-2 py-1 text-sm text-gray-600 bg-white border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-2 py-1 text-xs text-slate-200 bg-slate-800 border border-slate-700 rounded hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Move down"
                   >
                     ↓
                   </button>
                   <button
                     onClick={() => handleDeleteField(index)}
-                    className="px-2 py-1 text-red-600 bg-white border border-red-300 rounded hover:bg-red-50"
+                    className="px-2 py-1 text-xs text-red-300 bg-slate-900 border border-red-500/40 rounded hover:bg-red-950 hover:text-red-200"
                     title="Delete field"
                   >
                     <FiTrash2 size={16} />
@@ -319,31 +335,34 @@ const FieldGenerationPage = () => {
               </div>
             ))
           ) : (
-            <p className="text-center text-gray-500 py-8">Your generated fields will appear here. Drag to reorder or use arrow buttons.</p>
+            <p className="py-8 text-center text-sm text-slate-400">
+              Your generated fields will appear here after you click{' '}
+              <span className="font-semibold text-slate-200">Generate fields</span>.
+            </p>
           )}
         </div>
 
         {/* Save Button */}
         {fields.length > 0 && (
-          <div className="flex flex-col gap-4">
-            <div className="flex justify-end gap-4">
+          <div className="flex flex-col gap-4 pt-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button 
                 onClick={() => setShowPreview(true)}
-                className="px-8 py-3 font-semibold text-white bg-purple-600 rounded-lg hover:bg-purple-700 flex items-center gap-2"
+                className="flex items-center gap-2 rounded-lg bg-slate-800 px-6 py-2 text-sm font-medium text-slate-100 hover:bg-slate-700"
               >
                 <FiEye size={18} />
                 Preview Form
               </button>
               <button 
                 onClick={handleEditForm}
-                className="px-8 py-3 font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+                className="rounded-lg bg-slate-900 px-6 py-2 text-sm font-medium text-slate-100 border border-slate-700 hover:border-slate-400"
               >
                 Edit Fields
               </button>
               <button 
                 onClick={handleSaveForm} 
                 disabled={isSaving || !formTitle}
-                className="px-8 py-3 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="rounded-lg bg-sky-500 px-6 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-300"
               >
                 {isSaving ? 'Saving...' : 'Save & Test Form'}
               </button>
@@ -354,86 +373,86 @@ const FieldGenerationPage = () => {
         {/* Preview Modal */}
         {showPreview && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-slate-950 shadow-2xl shadow-slate-900/90 border border-slate-800">
               {/* Preview Header */}
-              <div className="flex justify-between items-center p-6 border-b bg-gray-50">
-                <h2 className="text-2xl font-bold">Preview Form</h2>
+              <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-6 py-4">
+                <h2 className="text-lg font-semibold text-slate-50">Form preview</h2>
                 <button
                   onClick={() => setShowPreview(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-slate-400 hover:text-slate-200"
                 >
                   <FiX size={24} />
                 </button>
               </div>
 
               {/* Theme Selector */}
-              <div className="p-6 border-b">
-                <p className="text-sm font-medium text-gray-700 mb-3">Select Theme:</p>
+              <div className="border-b border-slate-800 px-6 py-4">
+                <p className="mb-2 text-xs font-medium text-slate-300 uppercase tracking-wide">Select theme</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                   {Object.entries(themes).map(([key, theme]) => (
                     <button
                       key={key}
                       onClick={() => setSelectedTheme(key)}
-                      className={`p-3 rounded-lg border-2 transition-all ${
+                      className={`p-3 rounded-lg border text-xs transition-all ${
                         selectedTheme === key
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-sky-500 bg-sky-500/10'
+                          : 'border-slate-700 hover:border-slate-500'
                       }`}
                     >
-                      <p className="text-xs font-medium">{theme.name}</p>
+                      <p className="text-xs font-medium text-slate-100">{theme.name}</p>
                     </button>
                   ))}
                 </div>
               </div>
 
               {/* Form Preview */}
-              <div className={`p-8 ${themes[selectedTheme].bgClass}`}>
-                <div className={`${themes[selectedTheme].containerClass} p-8 rounded-lg shadow-md max-w-md mx-auto`}>
-                  <h3 className={`text-2xl font-bold mb-2 ${themes[selectedTheme].labelClass}`}>
+              <div className={`p-6 ${themes[selectedTheme].bgClass}`}>
+                <div className={`${themes[selectedTheme].containerClass} max-w-md mx-auto rounded-lg p-6 shadow-md`}>
+                  <h3 className={`mb-1 text-xl font-semibold ${themes[selectedTheme].labelClass}`}>
                     {formTitle || 'Form Title'}
                   </h3>
-                  <p className={`text-sm mb-6 ${themes[selectedTheme].labelClass} opacity-70`}>
+                  <p className={`mb-4 text-xs ${themes[selectedTheme].labelClass} opacity-70`}>
                     {formDescription || 'Form description'}
                   </p>
 
                   {/* Form Fields Preview */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {fields.map((field, index) => (
                       <div key={index}>
-                        <label className={`block mb-2 font-medium ${themes[selectedTheme].labelClass}`}>
+                        <label className={`mb-1 block text-sm font-medium ${themes[selectedTheme].labelClass}`}>
                           {field.fieldLabel}
                           {field.fieldRequired && <span className="text-red-500 ml-1">*</span>}
                         </label>
                         {field.fieldType === 'textarea' && (
                           <textarea
-                            className={`w-full px-3 py-2 border rounded-md ${themes[selectedTheme].inputClass}`}
+                            className={`w-full rounded-md border px-3 py-2 text-sm ${themes[selectedTheme].inputClass}`}
                             placeholder={`Enter ${field.fieldLabel.toLowerCase()}`}
                             disabled
                           />
                         )}
                         {field.fieldType === 'select' && (
-                          <select className={`w-full px-3 py-2 border rounded-md ${themes[selectedTheme].inputClass}`} disabled>
+                          <select className={`w-full rounded-md border px-3 py-2 text-sm ${themes[selectedTheme].inputClass}`} disabled>
                             <option>Select an option</option>
                           </select>
                         )}
                         {field.fieldType === 'radio' && (
-                          <div className="flex gap-4">
+                          <div className="flex gap-3 text-xs">
                             <label className="flex items-center gap-2">
-                              <input type="radio" disabled /> Option 1
+                              <input type="radio" disabled className="h-3 w-3" /> Option 1
                             </label>
                             <label className="flex items-center gap-2">
-                              <input type="radio" disabled /> Option 2
+                              <input type="radio" disabled className="h-3 w-3" /> Option 2
                             </label>
                           </div>
                         )}
                         {field.fieldType === 'checkbox' && (
-                          <label className="flex items-center gap-2">
-                            <input type="checkbox" disabled />
+                          <label className="flex items-center gap-2 text-xs">
+                            <input type="checkbox" disabled className="h-3 w-3" />
                             {field.fieldLabel}
                           </label>
                         )}
                         {field.fieldType === 'rating' && (
-                          <div className="flex gap-1">
+                          <div className="flex gap-1 text-base">
                             {[1, 2, 3, 4, 5].map(star => (
                               <span key={star} className="text-2xl cursor-pointer">☆</span>
                             ))}
@@ -442,7 +461,7 @@ const FieldGenerationPage = () => {
                         {(field.fieldType === 'text' || field.fieldType === 'email' || field.fieldType === 'number' || field.fieldType === 'phone' || field.fieldType === 'url' || field.fieldType === 'password') && (
                           <input
                             type={field.fieldType}
-                            className={`w-full px-3 py-2 border rounded-md ${themes[selectedTheme].inputClass}`}
+                            className={`w-full rounded-md border px-3 py-2 text-sm ${themes[selectedTheme].inputClass}`}
                             placeholder={`Enter ${field.fieldLabel.toLowerCase()}`}
                             disabled
                           />
@@ -450,14 +469,14 @@ const FieldGenerationPage = () => {
                         {(field.fieldType === 'date' || field.fieldType === 'time' || field.fieldType === 'datetime-local') && (
                           <input
                             type={field.fieldType}
-                            className={`w-full px-3 py-2 border rounded-md ${themes[selectedTheme].inputClass}`}
+                            className={`w-full rounded-md border px-3 py-2 text-sm ${themes[selectedTheme].inputClass}`}
                             disabled
                           />
                         )}
                         {field.fieldType === 'file' && (
                           <input
                             type="file"
-                            className={`w-full px-3 py-2 border rounded-md ${themes[selectedTheme].inputClass}`}
+                            className={`w-full rounded-md border px-3 py-2 text-sm ${themes[selectedTheme].inputClass}`}
                             disabled
                           />
                         )}
@@ -471,7 +490,7 @@ const FieldGenerationPage = () => {
                         {field.fieldType === 'color' && (
                           <input
                             type="color"
-                            className={`w-full px-3 py-2 border rounded-md ${themes[selectedTheme].inputClass}`}
+                            className={`w-full rounded-md border px-3 py-2 ${themes[selectedTheme].inputClass}`}
                             disabled
                           />
                         )}
@@ -481,7 +500,7 @@ const FieldGenerationPage = () => {
 
                   {/* Submit Button Preview */}
                   <button
-                    className={`w-full mt-6 px-4 py-2 rounded-lg font-medium text-white ${themes[selectedTheme].buttonClass}`}
+                    className={`mt-4 w-full rounded-lg px-4 py-2 text-sm font-medium text-white ${themes[selectedTheme].buttonClass}`}
                     disabled
                   >
                     Submit
@@ -490,10 +509,10 @@ const FieldGenerationPage = () => {
               </div>
 
               {/* Close Button */}
-              <div className="p-6 border-t bg-gray-50 flex justify-end gap-4">
+              <div className="flex justify-end gap-4 border-t border-slate-800 bg-slate-900 px-6 py-4">
                 <button
                   onClick={() => setShowPreview(false)}
-                  className="px-6 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+                  className="rounded-lg bg-slate-800 px-5 py-2 text-sm font-medium text-slate-100 hover:bg-slate-700"
                 >
                   Close
                 </button>
@@ -504,39 +523,41 @@ const FieldGenerationPage = () => {
 
         {/* Share Modal */}
         {showShareModal && savedFormId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl shadow-slate-900/80">
               {/* Share Header */}
-              <div className="flex justify-between items-center p-6 border-b bg-gradient-to-r from-green-500 to-blue-500">
-                <h2 className="text-2xl font-bold text-white">Form Saved Successfully! 🎉</h2>
+              <div className="flex items-center justify-between border-b border-emerald-500/40 bg-gradient-to-r from-emerald-500/20 to-sky-500/10 px-6 py-4">
+                <h2 className="text-lg font-semibold text-emerald-200">Form saved successfully</h2>
                 <button
                   onClick={() => setShowShareModal(false)}
-                  className="text-white hover:text-gray-200"
+                  className="text-emerald-100 hover:text-emerald-50"
                 >
                   <FiX size={24} />
                 </button>
               </div>
 
               {/* Share Content */}
-              <div className="p-6">
-                <p className="text-gray-700 mb-4">Your form has been created and is ready to share!</p>
+              <div className="px-6 py-5 text-sm text-slate-100">
+                <p className="mb-4 text-slate-200">Your form is ready. Share the link below to start collecting responses.</p>
                 
                 {/* Share Link */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Share this link:</label>
+                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">
+                    Share this link
+                  </label>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       readOnly
                       value={`${window.location.origin}/form/${savedFormId}`}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+                      className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-100"
                     />
                     <button
                       onClick={handleCopyShareLink}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                      className={`rounded-lg px-4 py-2 text-xs font-medium transition-all ${
                         copiedToClipboard
-                          ? 'bg-green-600 text-white'
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          ? 'bg-emerald-500 text-slate-950'
+                          : 'bg-sky-500 text-slate-950 hover:bg-sky-400'
                       }`}
                     >
                       {copiedToClipboard ? '✓ Copied!' : 'Copy'}
@@ -545,17 +566,18 @@ const FieldGenerationPage = () => {
                 </div>
 
                 {/* QR Code Info */}
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-sm text-blue-700">
-                    <strong>💡 Tip:</strong> Share this link with anyone to let them fill out your form. They can access it from any device!
+                <div className="mb-5 rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-xs text-slate-300">
+                  <p>
+                    <strong className="text-slate-100">Tip:</strong> share this link in email, chat or on your website.
+                    Anyone with the link can open and submit the form from any device.
                   </p>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3">
+                <div className="flex gap-3 pt-1 text-sm">
                   <button
                     onClick={handleGoToForm}
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                    className="flex-1 rounded-lg bg-emerald-500 px-4 py-2 font-medium text-slate-950 hover:bg-emerald-400"
                   >
                     View Form
                   </button>
@@ -564,7 +586,7 @@ const FieldGenerationPage = () => {
                       setShowShareModal(false);
                       setSavedFormId(null);
                     }}
-                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                    className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 font-medium text-slate-100 hover:border-slate-500"
                   >
                     Done
                   </button>
@@ -574,7 +596,7 @@ const FieldGenerationPage = () => {
           </div>
         )}
       </div>
-    </div>
+    </PageLayout>
   );
 };
 
