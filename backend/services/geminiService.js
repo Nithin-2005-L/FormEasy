@@ -138,6 +138,8 @@ export const getHtmlInputType = async (field) => {
     const prompt = `Given a form field with label "${field.fieldLabel}" and type "${field.fieldType}", what is the most appropriate HTML tag or input type? Choose one from: "input-text", "input-email", "input-password", "input-number", "input-date", "input-time", "input-datetime-local", "textarea", "select", "input-radio", "input-checkbox", "input-file", "input-url", "input-phone", "input-color", "input-range", "rating". Respond with ONLY ONE value from the list.`;
 
     const result = await model.generateContent(prompt);
+    console.log(result);
+    
     return result.response.text().trim();
   } catch (error) {
     console.error("Error getting HTML input type:", error);

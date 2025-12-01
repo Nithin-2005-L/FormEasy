@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 const FormResponsePage = () => {
   const { formId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
+  
+  // Check if user came from form creation/editing
+  const fromFormCreation = location.state?.fromFormCreation || false;
   
   const [form, setForm] = useState(null);
   const [responses, setResponses] = useState({});
@@ -68,12 +74,18 @@ const FormResponsePage = () => {
         
         // Initialize responses object
         const initialResponses = {};
-        data.fields.forEach(field => {
-          initialResponses[field.fieldName] = field.fieldType === 'checkbox' ? [] : '';
-        });
+        if (data.fields && Array.isArray(data.fields)) {
+          data.fields.forEach(field => {
+            if (field && field.fieldName) {
+              initialResponses[field.fieldName] = field.fieldType === 'checkbox' ? [] : '';
+            }
+          });
+        }
         setResponses(initialResponses);
       } catch (err) {
         console.error('Error fetching form:', err);
+        console.error('Form ID:', formId);
+        console.error('Error details:', err.message);
         setForm(null);
       } finally {
         setLoading(false);
@@ -148,11 +160,18 @@ const FormResponsePage = () => {
   };
 
   const renderField = (field) => {
+    // Safety checks
+    if (!field || !field.fieldName) {
+      console.error('Invalid field:', field);
+      return <p className="text-red-500 text-sm">Error: Invalid field configuration</p>;
+    }
+
     const value = responses[field.fieldName] || '';
     const error = errors[field.fieldName];
     const themeClasses = themes[selectedTheme].inputClass;
     const baseClasses = `w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${themeClasses}`;
     const errorClasses = error ? 'border-red-500 focus:ring-red-500' : '';
+    const fieldOptions = field.fieldOptions || [];
 
     switch (field.htmlType || field.fieldType) {
       case 'textarea':
@@ -170,9 +189,12 @@ const FormResponsePage = () => {
 
       case 'input-radio':
       case 'radio':
+        if (!fieldOptions || fieldOptions.length === 0) {
+          return <p className="text-red-500 text-sm">Error: Radio field requires options</p>;
+        }
         return (
           <div key={field.fieldName} className="space-y-2">
-            {field.fieldOptions.map(option => (
+            {fieldOptions.map(option => (
               <label key={option} className="flex items-center space-x-2">
                 <input
                   type="radio"
@@ -191,9 +213,12 @@ const FormResponsePage = () => {
 
       case 'input-checkbox':
       case 'checkbox':
+        if (!fieldOptions || fieldOptions.length === 0) {
+          return <p className="text-red-500 text-sm">Error: Checkbox field requires options</p>;
+        }
         return (
           <div key={field.fieldName} className="space-y-2">
-            {field.fieldOptions.map(option => (
+            {fieldOptions.map(option => (
               <label key={option} className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -209,6 +234,9 @@ const FormResponsePage = () => {
         );
 
       case 'select':
+        if (!fieldOptions || fieldOptions.length === 0) {
+          return <p className="text-red-500 text-sm">Error: Select field requires options</p>;
+        }
         return (
           <select
             key={field.fieldName}
@@ -218,7 +246,7 @@ const FormResponsePage = () => {
             required={field.fieldRequired}
           >
             <option value="">-- Select {field.fieldLabel} --</option>
-            {field.fieldOptions.map(option => (
+            {fieldOptions.map(option => (
               <option key={option} value={option}>{option}</option>
             ))}
           </select>
@@ -303,11 +331,15 @@ const FormResponsePage = () => {
         );
 
       case 'rating':
+        if (!fieldOptions || fieldOptions.length === 0) {
+          return <p className="text-red-500 text-sm">Error: Rating field requires options</p>;
+        }
         return (
           <div key={field.fieldName} className="flex space-x-2">
-            {field.fieldOptions.map(option => (
+            {fieldOptions.map(option => (
               <button
                 key={option}
+                type="button"
                 onClick={() => handleInputChange(field.fieldName, option, field.fieldType)}
                 className={`px-3 py-2 rounded border-2 transition ${
                   value === option
@@ -379,26 +411,41 @@ const FormResponsePage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {form.fields.map(field => (
-              <div key={field.fieldName}>
-                <label className={`block mb-2 font-medium ${themes[selectedTheme].labelClass}`}>
-                  {field.fieldLabel}
-                  {field.fieldRequired && <span className="text-red-500 ml-1">*</span>}
-                </label>
-                {renderField(field)}
-                {errors[field.fieldName] && (
-                  <p className="text-red-500 text-sm mt-1">{errors[field.fieldName]}</p>
-                )}
+            {form.fields && Array.isArray(form.fields) && form.fields.length > 0 ? (
+              form.fields.map((field, index) => (
+                <div key={field?.fieldName || index}>
+                  <label className={`block mb-2 font-medium ${themes[selectedTheme].labelClass}`}>
+                    {field?.fieldLabel || 'Unnamed Field'}
+                    {field?.fieldRequired && <span className="text-red-500 ml-1">*</span>}
+                  </label>
+                  {renderField(field)}
+                  {errors[field?.fieldName] && (
+                    <p className="text-red-500 text-sm mt-1">{errors[field.fieldName]}</p>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-red-500 text-lg mb-2">⚠️ No fields found in this form</p>
+                <p className="text-gray-600 text-sm">This form may have been created incorrectly or the fields data is missing.</p>
               </div>
-            ))}
+            )}
 
             <div className="flex space-x-4 pt-6">
               <button
                 type="button"
-                onClick={() => navigate('/')}
+                onClick={() => {
+                  // If user is authenticated, go to dashboard (they're likely the form creator)
+                  // Otherwise, go to landing page (public user)
+                  if (isAuthenticated) {
+                    navigate('/dashboard');
+                  } else {
+                    navigate('/');
+                  }
+                }}
                 className={`flex-1 px-4 py-2 rounded-lg font-semibold ${themes[selectedTheme].labelClass} bg-opacity-20`}
               >
-                Cancel
+                {isAuthenticated ? 'Back to Dashboard' : 'Cancel'}
               </button>
               <button
                 type="submit"
