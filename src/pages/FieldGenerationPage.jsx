@@ -223,7 +223,9 @@ const FieldGenerationPage = () => {
 
   const handleGoToForm = () => {
     if (savedFormId) {
-      navigate(`/form/${savedFormId}`);
+      navigate(`/form/${savedFormId}`, { 
+        state: { fromFormCreation: true, formId: savedFormId } 
+      });
     }
   };
 

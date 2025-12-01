@@ -90,6 +90,28 @@ export const getFormById = async (req, res) => {
       return res.status(404).json({ error: "Form not found" });
     }
     
+    // Validate and clean up fields data
+    if (form.fields && Array.isArray(form.fields)) {
+      form.fields = form.fields.map(field => {
+        // Ensure fieldOptions is always an array
+        if (!field.fieldOptions || !Array.isArray(field.fieldOptions)) {
+          field.fieldOptions = [];
+        }
+        // Ensure fieldName exists
+        if (!field.fieldName) {
+          field.fieldName = `field_${Date.now()}_${Math.random()}`;
+        }
+        // Ensure fieldLabel exists
+        if (!field.fieldLabel) {
+          field.fieldLabel = 'Unnamed Field';
+        }
+        return field;
+      });
+    } else {
+      // If fields is not an array, set it to empty array
+      form.fields = [];
+    }
+    
     res.status(200).json(form);
   } catch (error) {
     console.error("Error fetching form:", error);
